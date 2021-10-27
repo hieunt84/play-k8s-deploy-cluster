@@ -1,0 +1,56 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+ENV['VAGRANT_NO_PARALLEL'] = 'yes'
+
+Vagrant.configure(2) do |config|
+
+  config.vm.provision "shell", path: "bootstrap.sh"
+
+  # Kubernetes Master Server
+  config.vm.define "kmaster" do |node|
+  
+    node.vm.box               = "ubuntu/focal64"
+    node.vm.box_check_update  = false
+    node.vm.box_version       = "20211015.0.0"
+    node.vm.hostname          = "kmaster.example.com"
+
+    node.vm.network "public_network", ip: "172.20.10.110"
+  
+    node.vm.provider :virtualbox do |v|
+      v.name    = "kmaster"
+      v.memory  = 4096
+      v.cpus    =  2
+    end
+
+    node.vm.provision "shell", path: "bootstrap_kmaster.sh"
+  
+  end
+
+  # Kubernetes Worker Nodes
+  NodeCount = 3
+
+  (1..NodeCount).each do |i|
+
+    config.vm.define "kworker#{i}" do |node|
+
+      node.vm.box               = "ubuntu/focal64"
+      node.vm.box_check_update  = false
+      node.vm.box_version       = "20211015.0.0"
+      node.vm.hostname          = "kworker#{i}.example.com"
+
+      node.vm.network "public_network", ip: "172.20.10.11#{i}"
+
+      node.vm.provider :virtualbox do |v|
+        v.name    = "kworker#{i}"
+        v.memory  = 4096
+        v.cpus    = 2
+      end
+
+      node.vm.provision "shell", path: "bootstrap_kworker.sh"
+
+    end
+
+  end
+
+end
